@@ -38,6 +38,7 @@
   .seus ol { margin:0; padding-left:20px; }
   .seus li { margin:4px 0; }
   .vazio { color:var(--muted); font-size:13px; }
+  .papel { color:var(--muted); font-size:11px; margin-left:2px; }
   .nota { font-size:13px; color:var(--muted); margin-top:8px; }
   .escondido { display:none; }
   .form { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
@@ -291,7 +292,11 @@ function salvarTime() {
 /* Compara a espécie, ignorando acento, forma (entre parênteses) e sufixo Max (Dinamax, Gigamax, Eternamax). */
 const chaveNome = n => String(n).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   .replace(/\(.*?\)/g, " ").replace(/\b(dinamax|gigamax|gigantamax|eternamax)\b/g, " ").replace(/\s+/g, " ").trim();
-const meu = nome => time.find(p => chaveNome(p.nome) === chaveNome(nome));
+/* Gigamax e Dinamax são Pokémon diferentes. Nome sem sufixo (ex.: raid do Eternatus) vale para qualquer forma. */
+const formaMax = n => { const s = String(n).toLowerCase();
+  return /gigamax|gigantamax/.test(s) ? "g" : /dinamax/.test(s) ? "d" : ""; };
+const meu = nome => time.find(p => chaveNome(p.nome) === chaveNome(nome)
+  && (!formaMax(nome) || !formaMax(p.nome) || formaMax(p.nome) === formaMax(nome)));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const numFmt = n => Number(n).toLocaleString("pt-BR", {maximumFractionDigits: 1});
 
@@ -364,8 +369,9 @@ const tagSim = nome => meu(nome) ? '<span class="tag">Sim</span>' : "";
 
 /* ---------- ESTIMATIVAS (status base do GO Hub + CPM) ---------- */
 const BASE = {"Abra":[195,82,93],"Alakazam":[271,167,146],"Blissey":[129,169,496],"Butterfree":[167,137,155],"Centiskorch":[220,158,225],"Chansey":[60,128,487],"Charizard":[223,173,186],"Articuno":[192,236,207],"Cinderace":[238,163,190],"Corviknight":[163,192,221],"Darmanitan":[263,114,233],"Drampa":[231,164,186],"Duraludon":[239,185,172],"Electivire":[249,163,181],"Espeon":[261,175,163],"Excadrill":[255,129,242],"Flareon":[246,179,163],"Flygon":[205,168,190],"Gallade":[237,195,169],"Gardevoir":[237,195,169],"Gengar":[261,149,155],"Gigalith":[226,201,198],"Glaceon":[238,205,163],"Grimmsnarl":[227,139,216],"Gyarados":[237,186,216],"Hatterene":[237,182,149],"Ho-Oh":[239,244,214],"Hydreigon":[256,188,211],"Inteleon":[262,142,172],"Jolteon":[232,182,163],"Kabutops":[220,186,155],"Kadabra":[232,117,120],"Kingler":[240,181,146],"Lapras":[165,174,277],"Latias":[228,246,190],"Latios":[268,212,190],"Leafeon":[216,219,163],"Lugia":[193,310,235],"Machamp":[234,159,207],"Mesprit":[212,212,190],"Metagross":[257,228,190],"Moltres":[251,181,207],"Omastar":[207,201,172],"Raikou":[241,195,207],"Regirock":[179,309,190],"Registeel":[143,285,190],"Rhydon":[222,171,233],"Rhyperior":[241,190,251],"Rillaboom":[239,168,225],"Snorlax":[190,169,330],"Suicune":[180,235,225],"Sylveon":[203,205,216],"Toxtricity":[224,140,181],"Tsareena":[222,195,176],"Umbreon":[126,240,216],"Uxie":[156,270,181],"Vaporeon":[205,161,277],"Venusaur":[198,189,190],"Wailmer":[136,68,277],"Wailord":[175,87,347],"Weavile":[243,171,172],"Zacian":[332,240,192],"Zamazenta":[250,292,192],"Zapdos":[253,185,207],"Azelf":[270,151,181],"Eternatus":[278,192,268],"Cryogonal":[190,218,190]};
-const CPM_TAB = [[20,0.5974],[20.5,0.6048236651],[21,0.6121573],[21.5,0.6194041216],[22,0.6265671],[22.5,0.6336491432],[23,0.64065295],[23.5,0.6475809666],[24,0.65443563],[24.5,0.6612192524],[25,0.667934],[25.5,0.6745818959],[26,0.6811649],[26.5,0.6876849038],[27,0.69414365],[27.5,0.70054287],[28,0.7068842],[28.5,0.7131691091],[29,0.7193991],[29.5,0.7255756136],[30,0.7317],[30.5,0.7347410093],[31,0.7377695],[31.5,0.7407855938],[32,0.74378943],[32.5,0.7467812109],[33,0.74976104],[33.5,0.7527290867],[34,0.7556855],[34.5,0.7586303683],[35,0.76156384],[35.5,0.7644860647],[36,0.76739717],[36.5,0.7702972656],[37,0.7731865],[37.5,0.7760649616],[38,0.77893275],[38.5,0.7817900548],[39,0.784637],[39.5,0.7874736075],[40,0.7903],[40.5,0.792803968],[41,0.79530001],[41.5,0.797800015],[42,0.8003],[42.5,0.802799995],[43,0.8053],[43.5,0.8078],[44,0.81029999],[44.5,0.812799985],[45,0.81529999],[45.5,0.81779999],[46,0.82029999],[46.5,0.82279999],[47,0.82529999],[47.5,0.82779999],[48,0.83029999],[48.5,0.83279999],[49,0.83529999],[49.5,0.83779999],[50,0.84029999]];
+const CPM_TAB = [[1,0.094],[1.5,0.1351374318],[2,0.16639787],[2.5,0.192650919],[3,0.21573247],[3.5,0.2365726613],[4,0.25572005],[4.5,0.2735303812],[5,0.29024988],[5.5,0.3060573775],[6,0.3210876],[6.5,0.3354450362],[7,0.34921268],[7.5,0.3624577511],[8,0.3752356],[8.5,0.387592416],[9,0.39956728],[9.5,0.4111935514],[10,0.4225],[10.5,0.4329264091],[11,0.44310755],[11.5,0.4530599591],[12,0.4627984],[12.5,0.472336093],[13,0.48168495],[13.5,0.4908558003],[14,0.49985844],[14.5,0.508701765],[15,0.51739395],[15.5,0.5259425113],[16,0.5343543],[16.5,0.5426357375],[17,0.5507927],[17.5,0.5588305862],[18,0.5667545],[18.5,0.5745691333],[19,0.5822789],[19.5,0.5898879072],[20,0.5974],[20.5,0.6048236651],[21,0.6121573],[21.5,0.6194041216],[22,0.6265671],[22.5,0.6336491432],[23,0.64065295],[23.5,0.6475809666],[24,0.65443563],[24.5,0.6612192524],[25,0.667934],[25.5,0.6745818959],[26,0.6811649],[26.5,0.6876849038],[27,0.69414365],[27.5,0.70054287],[28,0.7068842],[28.5,0.7131691091],[29,0.7193991],[29.5,0.7255756136],[30,0.7317],[30.5,0.7347410093],[31,0.7377695],[31.5,0.7407855938],[32,0.74378943],[32.5,0.7467812109],[33,0.74976104],[33.5,0.7527290867],[34,0.7556855],[34.5,0.7586303683],[35,0.76156384],[35.5,0.7644860647],[36,0.76739717],[36.5,0.7702972656],[37,0.7731865],[37.5,0.7760649616],[38,0.77893275],[38.5,0.7817900548],[39,0.784637],[39.5,0.7874736075],[40,0.7903],[40.5,0.792803968],[41,0.79530001],[41.5,0.797800015],[42,0.8003],[42.5,0.802799995],[43,0.8053],[43.5,0.8078],[44,0.81029999],[44.5,0.812799985],[45,0.81529999],[45.5,0.81779999],[46,0.82029999],[46.5,0.82279999],[47,0.82529999],[47.5,0.82779999],[48,0.83029999],[48.5,0.83279999],[49,0.83529999],[49.5,0.83779999],[50,0.84029999]];
 const MAX_POT = {1: 250, 2: 300, 3: 350};
+const GMAX_POT = {1: 350, 2: 400, 3: 450};
 /* Referência do GO Hub: nível 50, Ataque Max 3, IV perfeito em tanque/curador. Para o atacante a página não diz o IV; usamos 15 (IV perfeito, como nos tanques). */
 const REF = {nivel: 50, ataque: 3, ivDef: 15, ivHp: 15, ivAtk: 15};
 const baseDe = nome => { const k = Object.keys(BASE).find(k => String(nome).startsWith(k)); return k ? BASE[k] : null; };
@@ -384,7 +390,8 @@ function estAtacante(p, m) {
   if (!b || !Number.isFinite(Number(p.dano))) return null;
   const seu = (b[0] + ivN(m.iv_atk)) * cpmDe(m.nivel);
   const ref = (b[0] + REF.ivAtk) * cpmDe(REF.nivel);
-  return p.dano * (seu / ref) * (MAX_POT[m.ataque] / MAX_POT[REF.ataque]);
+  const pot = formaMax(m.nome) === "g" ? GMAX_POT : MAX_POT;
+  return p.dano * (seu / ref) * (pot[m.ataque] / pot[REF.ataque]);
 }
 function estTanque(p, m) {
   const b = baseDe(p.nome);
@@ -394,15 +401,12 @@ function estTanque(p, m) {
   const ref = (b[2] + REF.ivHp) * (b[1] + REF.ivDef) * cr * cr;
   return p.ps_perdidos_por_golpe * (ref / seu);
 }
-function estCurador(p, m) {
-  const b = baseDe(p.nome);
-  const ps = Number(String(p.ps_curados_por_uso).replace(/[^\d.]/g, ""));
-  if (!b || !Number.isFinite(ps) || !ps) return null;
-  const pct = curaPct(m.cura);
-  if (!pct) return 0;
-  const seu = (b[2] + ivN(m.iv_hp)) * cpmDe(m.nivel) * pct;
-  const ref = (b[2] + REF.ivHp) * cpmDe(REF.nivel) * 16;
-  return ps * (seu / ref);
+/* Cura Max = 8/12/16% do PS do seu Pokémon. Não depende da raid, então vale para todos os seus com Cura Max. */
+function curadoresDoTime() {
+  return time.map(m => {
+    const b = baseDe(m.nome), pct = curaPct(m.cura);
+    return b && pct ? {p: {nome: m.nome}, m, v: (b[2] + ivN(m.iv_hp)) * cpmDe(m.nivel) * pct / 100} : null;
+  }).filter(Boolean);
 }
 
 /* Ranking dos seus Pokémon nesta raid, com estimativa e ganho de subir o Ataque Max */
@@ -411,9 +415,9 @@ function recomendar(e) {
     .filter(x => x.m).map(x => ({...x, v: f(x.p, x.m)})).filter(x => x.v !== null);
   const atac = donos(e.atacantes, estAtacante).sort((a, b) => b.v - a.v);
   const tank = donos(e.tanques, estTanque).sort((a, b) => a.v - b.v);
-  const cur = donos(e.curadores, estCurador).filter(x => x.m.cura > 0).sort((a, b) => b.v - a.v);
+  const cur = curadoresDoTime().sort((a, b) => b.v - a.v);
   const a1 = atac[0], a2 = atac[1];
-  const t = tank.find(x => !(a1 && a1.p.nome === x.p.nome) && !(a2 && a2.p.nome === x.p.nome));
+  const t = tank.find(x => x.m !== a1?.m && x.m !== a2?.m);
   const ganho = x => {
     if (!x || x.m.ataque >= 3) return null;
     const novo = estAtacante(x.p, {...x.m, ataque: x.m.ataque + 1});
@@ -422,23 +426,25 @@ function recomendar(e) {
   return {atac, tank, cur, a1, a2, t, ganho};
 }
 
-/* Times de 3 Pokémon: 2 tanques + 1 DPS, ou 1 tanque + 1 curador + 1 DPS. Nomes sempre diferentes. */
+/* Times de 3 Pokémon, sempre com Pokémon diferentes, na ordem do nome da opção. */
 function opcoesTime(r) {
+  const nomes = ["2 tanques + 1 DPS", "1 tanque + 1 curador + 1 DPS", "Tanque-curador + 2 DPS"];
   const dps = r.atac[0];
-  if (!dps) return [{nome: "2 tanques + 1 DPS", membros: null}, {nome: "1 tanque + 1 curador + 1 DPS", membros: null}, {nome: "Tanque-curador + 2 DPS", membros: null}];
-  const tanques = r.tank.filter(x => x.p.nome !== dps.p.nome);
-  const doisTanques = tanques.length >= 2 ? [dps, tanques[0], tanques[1]] : null;
+  if (!dps) return nomes.map(nome => ({nome, membros: null}));
+  const tanques = r.tank.filter(x => x.m !== dps.m);
+  const doisTanques = tanques.length >= 2 ? [[tanques[0], "tanque"], [tanques[1], "tanque"], [dps, "DPS"]] : null;
   const t1 = tanques[0];
-  const cur = t1 ? r.cur.find(x => x.p.nome !== dps.p.nome && x.p.nome !== t1.p.nome) : null;
-  const tanqueCurador = t1 && cur ? [dps, t1, cur] : null;
+  const cur = t1 ? r.cur.find(x => x.m !== dps.m && x.m !== t1.m) : null;
+  const tanqueCurador = t1 && cur ? [[t1, "tanque"], [cur, "curador"], [dps, "DPS"]] : null;
   /* Um Pokémon que é tanque e curador ao mesmo tempo (ex: Blissey) ocupa um slot só. */
-  const dupla = r.tank.find(t => r.cur.some(c => c.p.nome === t.p.nome));
-  const dps2 = r.atac.find(x => x.p.nome !== dps.p.nome && (!dupla || x.p.nome !== dupla.p.nome));
-  const tanqueCuradorDPS = dupla && dps2 ? [dupla, dps, dps2] : null;
+  const dupla = r.tank.find(t => r.cur.some(c => c.m === t.m));
+  const d1 = r.atac.find(x => !dupla || x.m !== dupla.m);
+  const d2 = d1 && r.atac.find(x => x.m !== d1.m && (!dupla || x.m !== dupla.m));
+  const tanqueCuradorDPS = dupla && d1 && d2 ? [[dupla, "tanque e curador"], [d1, "DPS"], [d2, "DPS"]] : null;
   return [
-    {nome: "2 tanques + 1 DPS", membros: doisTanques},
-    {nome: "1 tanque + 1 curador + 1 DPS", membros: tanqueCurador},
-    {nome: "Tanque-curador + 2 DPS", membros: tanqueCuradorDPS}
+    {nome: nomes[0], membros: doisTanques},
+    {nome: nomes[1], membros: tanqueCurador},
+    {nome: nomes[2], membros: tanqueCuradorDPS}
   ];
 }
 
@@ -447,33 +453,24 @@ function renderSeus(e) {
   const ic = nome => spriteDe(nome);
   const det = m => `nível ${numFmt(m.nivel)} · ${ivTxt(m)} · Ataque ${m.ataque} · Defesa ${m.defesa} · Cura ${m.cura}`;
   const linhaRec = (rotulo, x, valor) => `<div class="rec-linha"><span class="rec-rotulo">${rotulo}</span>${
-    x ? `<span class="rec-nome">${ic(x.p.nome)}<b>${esc(x.p.nome)}</b></span><span class="rec-valor">${valor}</span>`
+    x ? `<span class="rec-nome">${ic(x.m.nome)}<b>${esc(x.m.nome)}</b></span><span class="rec-valor">${valor}</span>`
       : '<span class="muted">nenhum seu nesta raid</span>'}</div>`;
   const upTxt = x => {
     const g = r.ganho(x);
     return g === null ? '' : `<div class="muted">Ataque Max ${x.m.ataque} → ${x.m.ataque + 1}: +${numFmt(g * 100)}% de dano</div>`;
   };
-  const chip = nome => `<span class="time-chip">${ic(nome)}${esc(nome)}</span>`;
+  const chip = (nome, papel) => `<span class="time-chip">${ic(nome)}${esc(nome)} <span class="papel">${esc(papel)}</span></span>`;
   const time = (titulo, membros) => `<div class="rec-linha"><span class="rec-rotulo">${titulo}</span>${
-    membros ? membros.map(x => chip(x.p.nome)).join(" + ") : '<span class="muted">não dá para fechar com o que você tem</span>'}</div>`;
+    membros ? membros.map(([x, papel]) => chip(x.m.nome, papel)).join(" + ") : '<span class="muted">não dá para fechar com o que você tem</span>'}</div>`;
   const opcoes = opcoesTime(r);
 
-  /* Sempre 3 linhas: primeiro os seus (ranqueados); se faltar, completa com os melhores da página que você não tem. */
-  const top3 = (donos, lista, valorPag) => {
-    const itens = donos.slice(0, 3).map(x => ({p: x.p, m: x.m, v: x.v}));
-    for (const p of (lista || [])) {
-      if (itens.length >= 3) break;
-      if (!meu(p.nome)) itens.push({p, m: null, v: null, pag: valorPag(p)});
-    }
-    return itens;
-  };
+  /* Os seus 3 melhores. Quem você não tem aparece nas tabelas da página, mais abaixo. */
+  const top3 = donos => donos.slice(0, 3);
   const coluna = (titulo, itens, valorFn) => `<div class="coluna"><div class="col-titulo">${titulo}</div>${
-    itens.length ? `<ol class="lista-rank">${itens.map((x, i) => x.m
-      ? `<li><span class="pos">${i + 1}º</span>${ic(x.p.nome)}<div><b>${esc(x.p.nome)}</b> <span class="valor">${valorFn(x)}</span>
-          <div class="det">${det(x.m)}</div></div></li>`
-      : `<li><span class="pos">${i + 1}º</span>${ic(x.p.nome)}<div><b>${esc(x.p.nome)}</b> <span class="valor muted">página ${esc(x.pag)}</span>
-          <div class="det muted">não tenho</div></div></li>`).join("")}</ol>`
-    : '<div class="vazio">Nada para mostrar nesta raid</div>'}</div>`;
+    itens.length ? `<ol class="lista-rank">${itens.map((x, i) =>
+      `<li><span class="pos">${i + 1}º</span>${ic(x.m.nome)}<div><b>${esc(x.m.nome)}</b> <span class="valor">${valorFn(x)}</span>
+          <div class="det">${det(x.m)}</div></div></li>`).join("")}</ol>`
+    : '<div class="vazio">Nenhum seu nesta raid</div>'}</div>`;
 
   document.getElementById("seus").innerHTML = `
     <div class="rec-card">
@@ -485,11 +482,11 @@ function renderSeus(e) {
       ${opcoes.map(o => time(o.nome, o.membros)).join("")}
     </div>
     <div class="seus-grid">
-      ${coluna("Dano (atacantes)", top3(r.atac, e.atacantes, p => numFmt(p.dano)), x => `<span class="muted">≈</span> <b>${numFmt(x.v)}</b>`)}
-      ${coluna("Tanques (menor % é melhor)", top3(r.tank, e.tanques, p => numFmt(p.ps_perdidos_por_golpe) + "%"), x => `<b>${numFmt(x.v)}%</b> por golpe`)}
-      ${coluna("Curadores (PS por uso)", top3(r.cur, e.curadores, p => p.ps_curados_por_uso), x => `<b>${numFmt(x.v)}</b> PS`)}
+      ${coluna("Dano (atacantes)", top3(r.atac), x => `<span class="muted">≈</span> <b>${numFmt(x.v)}</b>`)}
+      ${coluna("Tanques (menor % é melhor)", top3(r.tank), x => `<b>${numFmt(x.v)}%</b> por golpe`)}
+      ${coluna("Curadores (PS por uso)", top3(r.cur), x => `<b>${numFmt(x.v)}</b> PS`)}
     </div>
-    <div class="nota">"≈" é a estimativa para o seu Pokémon, com nível, IV e Max cadastrados. "página" é o número do GO Hub (tudo no máximo). IV em branco conta como 0. Curador com Cura Max 0 não cura, então não entra no ranking.</div>`;
+    <div class="nota">"≈" é a estimativa para o seu Pokémon, com nível, IV e Max cadastrados. "página" é o número do GO Hub (tudo no máximo). IV em branco conta como 0. Curador: a Cura Max cura uma % do PS do seu Pokémon, então vale para qualquer raid; com Cura Max 0 ele não entra.</div>`;
 }
 
 function renderAtacantes() {
@@ -572,7 +569,7 @@ document.getElementById("tabTime").addEventListener("click", ev => {
   const ed = ev.target.closest("[data-editar]");
   const rm = ev.target.closest("[data-remover]");
   if (ed) {
-    const p = meu(ed.dataset.editar);
+    const p = time.find(x => x.nome === ed.dataset.editar);
     fNome.value = p.nome; fNivel.value = p.nivel;
     fAtaque.value = String(p.ataque); fDefesa.value = String(p.defesa); fCura.value = String(p.cura);
     fIvAtk.value = p.iv_atk ?? ""; fIvDef.value = p.iv_def ?? ""; fIvHp.value = p.iv_hp ?? "";
@@ -709,6 +706,12 @@ const TRAD_EN = {
  "1 tanque + 1 curador + 1 DPS": "1 tank + 1 healer + 1 DPS",
  "não dá para fechar com o que você tem": "can't be made with what you have",
  "nenhum seu nesta raid": "none of yours in this raid",
+ "Nenhum seu nesta raid": "None of yours in this raid",
+ "Tanque-curador + 2 DPS": "Tank-healer + 2 DPS",
+ "tanque e curador": "tank and healer",
+ "tanque": "tank",
+ "curador": "healer",
+ "\"≈\" é a estimativa para o seu Pokémon, com nível, IV e Max cadastrados. \"página\" é o número do GO Hub (tudo no máximo). IV em branco conta como 0. Curador: a Cura Max cura uma % do PS do seu Pokémon, então vale para qualquer raid; com Cura Max 0 ele não entra.": "\"≈\" is the estimate for your Pokémon, using the level, IV and Max levels you entered. \"página\" is the GO Hub number (everything maxed). Blank IV counts as 0. Healer: Max Spirit heals a % of your Pokémon's own HP, so it works in any raid; with Max Spirit 0 it is left out.",
  "Nenhum seu aparece aqui": "None of yours appear here",
  "Dano (atacantes)": "Damage (attackers)",
  "Tanques (menor % é melhor)": "Tanks (lower % is better)",
