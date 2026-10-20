@@ -40,6 +40,9 @@
   .vazio { color:var(--muted); font-size:13px; }
   .papel { color:var(--muted); font-size:11px; margin-left:2px; }
   .nota { font-size:13px; color:var(--muted); margin-top:8px; }
+  .alerta { border:1px solid var(--warn); border-left-width:4px; border-radius:8px; padding:8px 10px; margin-bottom:12px; color:var(--txt); font-size:14px; }
+  .alerta b { color:var(--warn); }
+  .alerta ul { margin:4px 0 0; padding-left:18px; }
   .escondido { display:none; }
   .form { display:flex; gap:10px; flex-wrap:wrap; align-items:end; }
   .form label { display:flex; flex-direction:column; font-size:12px; color:var(--muted); gap:4px; }
@@ -448,6 +451,30 @@ function opcoesTime(r) {
   ];
 }
 
+/* Raids difíceis: lendários, Gigamax e Eternamax. Feitas para grupos com Pokémon no máximo. */
+const LENDARIOS = ["Articuno", "Zapdos", "Moltres", "Raikou", "Entei", "Suicune", "Lugia", "Ho-Oh", "Latias", "Latios",
+  "Regice", "Regirock", "Registeel", "Kubfu", "Urshifu", "Uxie", "Mesprit", "Azelf", "Dialga", "Palkia", "Eternatus"];
+const raidDificil = e => /gigamax|gigantamax|eternamax/i.test(e.alvo) || LENDARIOS.some(n => e.alvo.startsWith(n + " "));
+/* Limites do alerta: atacante com menos da metade do dano do melhor counter no máximo, ou tanque que aguenta menos de 4 golpes. */
+const ALERTA = {danoMin: 0.5, golpesMin: 4};
+function alertaRaid(e, r) {
+  if (!raidDificil(e)) return "";
+  const motivos = [];
+  const topPag = Math.max(...e.atacantes.map(p => Number(p.dano)).filter(Number.isFinite));
+  if (!r.a1) motivos.push("Você não tem nenhum atacante da lista desta raid.");
+  else if (topPag > 0 && r.a1.v / topPag < ALERTA.danoMin)
+    motivos.push(`Seu melhor atacante (${esc(r.a1.m.nome)}) faz só ${numFmt(r.a1.v / topPag * 100)}% do dano do melhor counter no máximo.`);
+  if (!r.tank[0]) motivos.push("Você não tem nenhum tanque da lista desta raid.");
+  else if (100 / r.tank[0].v < ALERTA.golpesMin)
+    motivos.push(`Seu melhor tanque (${esc(r.tank[0].m.nome)}) aguenta só uns ${numFmt(Math.floor(100 / r.tank[0].v))} golpes do chefe.`);
+  if (!r.cur[0]) motivos.push("Você não tem curador (Pokémon com Cura Max).");
+  if (!motivos.length) return "";
+  const tipo = /gigamax|gigantamax/i.test(e.alvo) ? "Gigamax" : /eternamax/i.test(e.alvo) ? "Eternamax" : "lendária";
+  return `<div class="alerta"><b>⚠ Provavelmente não vai dar para concluir</b> esta raid ${tipo} com o seu time.
+    <ul>${motivos.map(m => `<li>${m}</li>`).join("")}</ul>
+    <div class="det">Raids de lendários e Gigamax são feitas para grupos com Pokémon de nível alto e golpes Max evoluídos. Junte mais treinadores ou fortaleça seus Pokémon.</div></div>`;
+}
+
 function renderSeus(e) {
   const r = recomendar(e);
   const ic = nome => spriteDe(nome);
@@ -473,6 +500,7 @@ function renderSeus(e) {
     : '<div class="vazio">Nenhum seu nesta raid</div>'}</div>`;
 
   document.getElementById("seus").innerHTML = `
+    ${alertaRaid(e, r)}
     <div class="rec-card">
       <h3>Melhor para esta raid</h3>
       ${linhaRec("Mais dano", r.a1, r.a1 ? `≈ ${numFmt(r.a1.v)}` : "")}${r.a1 ? upTxt(r.a1) : ""}
@@ -707,6 +735,20 @@ const TRAD_EN = {
  "não dá para fechar com o que você tem": "can't be made with what you have",
  "nenhum seu nesta raid": "none of yours in this raid",
  "Nenhum seu nesta raid": "None of yours in this raid",
+ "⚠ Provavelmente não vai dar para concluir": "⚠ You probably won't be able to finish",
+ "esta raid Gigamax com o seu time.": "this Gigamax raid with your team.",
+ "esta raid Eternamax com o seu time.": "this Eternamax raid with your team.",
+ "esta raid lendária com o seu time.": "this legendary raid with your team.",
+ "Você não tem nenhum atacante da lista desta raid.": "You have no attacker from this raid's list.",
+ "Você não tem nenhum tanque da lista desta raid.": "You have no tank from this raid's list.",
+ "Você não tem curador (Pokémon com Cura Max).": "You have no healer (Pokémon with Max Spirit).",
+ "Seu melhor atacante": "Your best attacker",
+ "faz só": "deals only",
+ "do dano do melhor counter no máximo.": "of the damage of the best fully maxed counter.",
+ "Seu melhor tanque": "Your best tank",
+ "aguenta só uns": "survives only about",
+ "golpes do chefe.": "boss hits.",
+ "Raids de lendários e Gigamax são feitas para grupos com Pokémon de nível alto e golpes Max evoluídos. Junte mais treinadores ou fortaleça seus Pokémon.": "Legendary and Gigamax raids are made for groups with high-level Pokémon and upgraded Max moves. Bring more trainers or power up your Pokémon.",
  "Tanque-curador + 2 DPS": "Tank-healer + 2 DPS",
  "tanque e curador": "tank and healer",
  "tanque": "tank",
