@@ -22,7 +22,7 @@ App de uma página só (`app/pokego.html`), sem servidor, que abre com duplo cli
 | `app/pokego.html` | **App final**, com os dados embutidos. Esse é o que o usuário abre. |
 | `app/pokego.bak.html` | Backup de uma versão anterior. |
 | `app/pokego.py` | Versão antiga em tkinter (Python). Não é mais o foco. |
-| `app/todos.json` | Dados das raids (158 entradas) usados pelo Python. |
+| `app/todos.json` | Dados das raids (158 entradas, versão antiga com raids que não existem) usados pelo Python. |
 | `app/meu_time_importar.json` | Time de exemplo do usuário, para importar. |
 | `counters/todos.json` | Dataset unificado (fonte de verdade dos dados das raids). |
 | `counters/lote-01..11.json` | Lotes brutos de coleta por páginas do GO Hub. |
@@ -48,6 +48,19 @@ Cada entrada em `DADOS.entradas`:
 - `dano` do atacante: número da página, sem unidade. Assume tudo no máximo.
 - `ps_perdidos_por_golpe` do tanque: % do PS por golpe, menor é melhor.
 - `ps_curados_por_uso` do curador: PS curado por uso da Cura Max nível 3.
+
+### 3.1 Quais raids entram
+
+O app só lista chefes que já tiveram raid ou que já foram anunciados (lista conferida em 20/10/2026):
+
+- **Dinamax:** Abra, Articuno, Beldum, Bounsweet, Bulbasaur, Caterpie, Chansey, Charmander, Combee, Cottonee, Cryogonal, Darumaka, Deino, Drampa, Drilbur, Duraludon, Eevee, Electabuzz, Entei, Falinks, Feebas, Gastly, Grookey, Growlithe, Hatenna, Hitmonchan, Hitmonlee, Hitmontop, Ho-Oh, Hoothoot, Inkay, Kabuto, Krabby, Kubfu, Latias, Latios, Lugia, Machop, Magikarp, Magmar, Moltres, Omanyte, Passimian, Pidove, Pikachu, Raikou, Ralts, Regice, Regirock, Registeel, Rhyhorn, Roggenrola, Rookidee, Sableye, Scorbunny, Shuckle, Sizzlipede, Skwovet, Sneasel, Sobble, Spheal, Squirtle, Suicune, Trapinch, Trubbish, Urshifu, Wailmer, Woobat, Wooloo, Zapdos.
+- **Anunciados:** Uxie, Mesprit, Azelf (fim de outubro de 2026); Dialga, Palkia (novembro de 2026).
+- **Gigamax:** Venusaur, Charizard, Blastoise, Butterfree, Pikachu, Meowth, Machamp, Gengar, Kingler, Lapras, Snorlax, Garbodor, Toxtricity, Rillaboom, Cinderace, Inteleon, Coalossal, Grimmsnarl.
+- **Especial:** Eternatus Eternamax.
+
+Evoluções (Charizard Dinamax, Gengar Dinamax etc.) não aparecem como raid: no jogo você captura a forma básica e evolui. Elas continuam aparecendo como **counters**.
+
+Ainda **sem dados de counters no app** (falta coletar no GO Hub): Combee, Cottonee, Magmar, Pikachu e Urshifu (Dinamax); Pikachu e Coalossal (Gigamax).
 
 ## 4. Como o GO Hub calcula (base do que o app replica)
 
@@ -217,7 +230,7 @@ Sem status base no app (não estimados): Urshifu (892 indisponível no GO Hub), 
 
 ## 10. Pendências
 
-1. Urshifu (892): aguardar o GO Hub publicar a página, ou usar outra fonte.
+1. Coletar counters das raids que faltam: Combee, Cottonee, Magmar, Pikachu, Urshifu (Dinamax), Pikachu e Coalossal (Gigamax). Urshifu (892) ainda não tem página no GO Hub.
 2. Toxtricity Low Key: status não conferido.
 3. Gallade e Gardevoir: vieram iguais; conferir na fonte.
 4. Gengar Gigamax: o app usa a forma comum.
