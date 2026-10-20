@@ -228,6 +228,15 @@ Sem status base no app (não estimados): Urshifu (892 indisponível no GO Hub), 
 - Para regenerar o app a partir dos dados: o HTML tem o JSON embutido em `const DADOS = {...}`. Os status base estão em `const BASE`, a tabela de CPM em `const CPM_TAB`, e a referência em `const REF`.
 - Testes feitos: `node --check` na parte de script; conferência do CP; testes isolados das funções de estimativa. Teste de fumaça em Chromium headless com tela de celular (390 px): abre sem erros no console e sem rolagem horizontal. Ainda não testado em celular real.
 
+### 9.1 Conferência dos dados (20/10/2026)
+
+Sem acesso direto ao GO Hub, os dados foram conferidos por consistência interna:
+- **Atacantes:** em cada raid, atacantes com o mesmo golpe Max devem ter dano proporcional a (ataque base + 15) × potência (350 Dinamax, 450 Gigamax). 211 pares conferidos; todos batem com erro < 2%, exceto 8 que dão exatamente −16,7% (= sem STAB, ex.: Ho-Oh com Tempestade Mental Max). Ou seja, os danos são coerentes e com IV 15.
+- **Tanques:** Chansey/Blissey na mesma raid devem dar razão 1,31; 8 de 8 batem (um difere só pelo arredondamento).
+- **Curadores:** 16% × (PS base + 15) × CPM50 dá Blissey 68,7, Chansey 67,5, Wailord 48,7; a página mostra 68 / 67 / 48. Confirma nível 50 e IV 15.
+- **Corrigido:** em 11 raids (Bulbasaur, Venusaur G-Max, Charmander, Charizard G-Max, Squirtle, Blastoise G-Max, Caterpie, Butterfree G-Max, Meowth G-Max, Growlithe, Abra) os curadores estavam salvos como texto ("Blissey Dinamax (68)"), e o app não reconhecia o seu curador nessas raids.
+- **Eternatus:** os nomes da raid vêm sem "Dinamax" (ex.: "Blissey"), então os Pokémon do seu time não são reconhecidos nela.
+
 ## 10. Pendências
 
 1. Coletar counters das raids que faltam: Combee, Cottonee, Magmar, Pikachu, Urshifu (Dinamax), Pikachu e Coalossal (Gigamax). Urshifu (892) ainda não tem página no GO Hub.
