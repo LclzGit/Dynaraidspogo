@@ -264,13 +264,16 @@ const nomesTodos = [...new Set(entradas.flatMap(e => [
 
 let alvoAtual = entradas[0].alvo;
 
-/* Formato: {nome, nivel, ataque, defesa, cura}. Migra o formato antigo (nivel_max = ataque). */
+/* Formato: {id, nome, nivel, ataque, defesa, cura}. Migra o formato antigo (nivel_max = ataque).
+   O id separa Pokémon repetidos (ex.: 3 Blisseys diferentes). */
+const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 function normalizar(p) {
   const num = (v, d) => (Number.isFinite(Number(v)) && Number(v) >= 1) ? Number(v) : d;
   const nivelZero = v => (Number.isFinite(Number(v)) && Number(v) >= 0) ? Math.min(3, Math.round(Number(v))) : 0;
   const iv = v => (v === null || v === undefined || v === "" || !Number.isFinite(Number(v)))
     ? null : Math.min(15, Math.max(0, Math.round(Number(v))));
   return {
+    id: p.id ? String(p.id) : novoId(),
     nome: String(p.nome),
     nivel: num(p.nivel, 40),
     ataque: Math.min(3, num(p.ataque ?? p.nivel_max, 1)),
@@ -289,6 +292,7 @@ function carregarTime() {
   } catch (e) { return []; }
 }
 let time = carregarTime();
+salvarTime(); /* grava os ids gerados para times antigos */
 function salvarTime() {
   try { localStorage.setItem(CHAVE, JSON.stringify(time)); } catch (e) {}
 }
@@ -298,8 +302,9 @@ const chaveNome = n => String(n).normalize("NFD").replace(/[\u0300-\u036f]/g, ""
 /* Gigamax e Dinamax são Pokémon diferentes. Nome sem sufixo (ex.: raid do Eternatus) vale para qualquer forma. */
 const formaMax = n => { const s = String(n).toLowerCase();
   return /gigamax|gigantamax/.test(s) ? "g" : /dinamax/.test(s) ? "d" : ""; };
-const meu = nome => time.find(p => chaveNome(p.nome) === chaveNome(nome)
+const meus = nome => time.filter(p => chaveNome(p.nome) === chaveNome(nome)
   && (!formaMax(nome) || !formaMax(p.nome) || formaMax(p.nome) === formaMax(nome)));
+const meu = nome => meus(nome)[0];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const numFmt = n => Number(n).toLocaleString("pt-BR", {maximumFractionDigits: 1});
 
@@ -414,8 +419,8 @@ function curadoresDoTime() {
 
 /* Ranking dos seus Pokémon nesta raid, com estimativa e ganho de subir o Ataque Max */
 function recomendar(e) {
-  const donos = (lista, f) => (lista || []).map(p => ({p, m: meu(p.nome)}))
-    .filter(x => x.m).map(x => ({...x, v: f(x.p, x.m)})).filter(x => x.v !== null);
+  const donos = (lista, f) => (lista || []).flatMap(p => meus(p.nome).map(m => ({p, m})))
+    .map(x => ({...x, v: f(x.p, x.m)})).filter(x => x.v !== null);
   const atac = donos(e.atacantes, estAtacante).sort((a, b) => b.v - a.v);
   const tank = donos(e.tanques, estTanque).sort((a, b) => a.v - b.v);
   const cur = curadoresDoTime().sort((a, b) => b.v - a.v);
@@ -486,9 +491,9 @@ function renderSeus(e) {
     const g = r.ganho(x);
     return g === null ? '' : `<div class="muted">Ataque Max ${x.m.ataque} → ${x.m.ataque + 1}: +${numFmt(g * 100)}% de dano</div>`;
   };
-  const chip = (nome, papel) => `<span class="time-chip">${ic(nome)}${esc(nome)} <span class="papel">${esc(papel)}</span></span>`;
+  const chip = (m, papel, nome = m.nome) => `<span class="time-chip">${ic(nome)}${esc(nome)} <span class="papel">${esc(papel)} · nível ${numFmt(m.nivel)}</span></span>`;
   const time = (titulo, membros) => `<div class="rec-linha"><span class="rec-rotulo">${titulo}</span>${
-    membros ? membros.map(([x, papel]) => chip(x.m.nome, papel)).join(" + ") : '<span class="muted">não dá para fechar com o que você tem</span>'}</div>`;
+    membros ? membros.map(([x, papel]) => chip(x.m, papel)).join(" + ") : '<span class="muted">não dá para fechar com o que você tem</span>'}</div>`;
   const opcoes = opcoesTime(r);
 
   /* Os seus 3 melhores. Quem você não tem aparece nas tabelas da página, mais abaixo. */
@@ -561,6 +566,7 @@ function mostrarMsg(texto, erro) {
   msg.style.color = erro ? "var(--warn)" : "var(--ok)";
 }
 
+let editandoId = null;
 document.getElementById("salvar").addEventListener("click", () => {
   const nome = fNome.value.trim();
   const nivel = parseFloat(String(fNivel.value).replace(",", "."));
@@ -568,8 +574,9 @@ document.getElementById("salvar").addEventListener("click", () => {
   if (!(nivel >= 1 && nivel <= 50)) { mostrarMsg("Nível entre 1 e 50.", true); return; }
   const novo = normalizar({nome, nivel, ataque: +fAtaque.value, defesa: +fDefesa.value, cura: +fCura.value,
     iv_atk: fIvAtk.value, iv_def: fIvDef.value, iv_hp: fIvHp.value});
-  const i = time.findIndex(p => p.nome === nome);
-  if (i >= 0) time[i] = novo; else time.push(novo);
+  const i = editandoId ? time.findIndex(p => p.id === editandoId) : -1;
+  if (i >= 0) { novo.id = editandoId; time[i] = novo; } else time.push(novo);
+  editandoId = null;
   salvarTime();
   mostrarMsg(`${nome} salvo: nível ${numFmt(nivel)}, Ataque ${novo.ataque}, Defesa ${novo.defesa}, Cura ${novo.cura}.`, false);
   renderTime();
@@ -577,17 +584,17 @@ document.getElementById("salvar").addEventListener("click", () => {
 
 document.getElementById("limpar-form").addEventListener("click", () => {
   fNome.value = ""; fNivel.value = "40"; fAtaque.value = "1"; fDefesa.value = "0"; fCura.value = "0";
-  fIvAtk.value = ""; fIvDef.value = ""; fIvHp.value = ""; msg.textContent = "";
+  fIvAtk.value = ""; fIvDef.value = ""; fIvHp.value = ""; msg.textContent = ""; editandoId = null;
 });
 
 function renderTime() {
-  const ordenado = [...time].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  const ordenado = [...time].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR") || b.nivel - a.nivel);
   document.getElementById("qtd").textContent = time.length;
   const linhas = ordenado.map(p => `<tr>
     <td class="nome">${spriteDe(p.nome)}${esc(p.nome)}</td><td>${numFmt(p.nivel)}</td><td>${p.iv_atk ?? "?"}/${p.iv_def ?? "?"}/${p.iv_hp ?? "?"}</td>
     <td>${p.ataque}</td><td>${p.defesa}</td><td>${p.cura}</td>
-    <td><button class="acao" data-editar="${esc(p.nome)}">Editar</button> ·
-        <button class="acao perigo" data-remover="${esc(p.nome)}">Remover</button></td></tr>`).join("");
+    <td><button class="acao" data-editar="${esc(p.id)}">Editar</button> ·
+        <button class="acao perigo" data-remover="${esc(p.id)}">Remover</button></td></tr>`).join("");
   document.getElementById("tabTime").innerHTML =
     `<tr><th>Pokémon</th><th>Nível</th><th>IV Atk/Def/PS</th><th>Ataque Max</th><th>Defesa Max</th><th>Cura Max</th><th></th></tr>` +
     (linhas || `<tr><td class="muted">Nenhum Pokémon cadastrado ainda.</td></tr>`);
@@ -597,17 +604,19 @@ document.getElementById("tabTime").addEventListener("click", ev => {
   const ed = ev.target.closest("[data-editar]");
   const rm = ev.target.closest("[data-remover]");
   if (ed) {
-    const p = time.find(x => x.nome === ed.dataset.editar);
+    const p = time.find(x => x.id === ed.dataset.editar);
+    editandoId = p.id;
     fNome.value = p.nome; fNivel.value = p.nivel;
     fAtaque.value = String(p.ataque); fDefesa.value = String(p.defesa); fCura.value = String(p.cura);
     fIvAtk.value = p.iv_atk ?? ""; fIvDef.value = p.iv_def ?? ""; fIvHp.value = p.iv_hp ?? "";
-    mostrarMsg("Editando " + p.nome + ". Ajuste e clique em Salvar.", false);
+    mostrarMsg("Editando " + p.nome + ". Ajuste e clique em Salvar (ou Limpar para cadastrar outro).", false);
     window.scrollTo({top: 0, behavior: "smooth"});
   }
   if (rm) {
-    const nome = rm.dataset.remover;
-    if (confirm(`Remover ${nome} do seu time?`)) {
-      time = time.filter(p => p.nome !== nome);
+    const alvo = time.find(p => p.id === rm.dataset.remover);
+    if (alvo && confirm(`Remover ${alvo.nome} (nível ${numFmt(alvo.nivel)}) do seu time?`)) {
+      time = time.filter(p => p.id !== alvo.id);
+      if (editandoId === alvo.id) editandoId = null;
       salvarTime();
       renderTime();
     }
