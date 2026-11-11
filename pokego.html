@@ -158,7 +158,7 @@
       <summary>Como ler esta tela</summary>
       <ul>
         <li><b>Escolha a raid</b> na busca acima: digite o nome ou o número da Pokédex.</li>
-        <li><b>Recomendação:</b> mostra o seu melhor atacante, tanque e curador para esta raid, e três times de 3 Pokémon (2 tanques + 1 DPS; 1 tanque + 1 curador + 1 DPS; ou 1 tanque-curador + 2 DPS).</li>
+        <li><b>Recomendação:</b> mostra o seu melhor atacante, tanque e curador para esta raid, e dois times de 3 Pokémon (2 tanques + 1 DPS, ou 1 tanque + 1 curador + 1 DPS).</li>
         <li><b>"seu ≈":</b> é a estimativa para o SEU Pokémon, usando nível, IV e Max que você cadastrou. O número "página" é o do GO Hub, com nível 40, Max 3 e IV 15.</li>
         <li><b>Atacante:</b> quanto maior o dano, melhor. <b>Tanque:</b> quanto menor a % de PS perdido por golpe, melhor. <b>Curador:</b> quanto maior o PS curado por uso, melhor.</li>
         <li><b>Subir Ataque Max:</b> mostra quanto o dano aumenta com um nível a mais no golpe Max.</li>
@@ -450,7 +450,8 @@ function recomendar(e) {
 
 /* Times de 3 Pokémon, sempre com Pokémon diferentes, na ordem do nome da opção. */
 function opcoesTime(r) {
-  const nomes = ["2 tanques + 1 DPS", "1 tanque + 1 curador + 1 DPS", "Tanque-curador + 2 DPS"];
+  /* Sem time de 2 DPS: nas Max Battles o time precisa de tanque e curador para aguentar o chefe. */
+  const nomes = ["2 tanques + 1 DPS", "1 tanque + 1 curador + 1 DPS"];
   const dps = r.atac[0];
   if (!dps) return nomes.map(nome => ({nome, membros: null}));
   const tanques = r.tank.filter(x => x.m !== dps.m);
@@ -458,15 +459,9 @@ function opcoesTime(r) {
   const t1 = tanques[0];
   const cur = t1 ? r.cur.find(x => x.m !== dps.m && x.m !== t1.m) : null;
   const tanqueCurador = t1 && cur ? [[t1, "tanque"], [cur, "curador"], [dps, "DPS"]] : null;
-  /* Um Pokémon que é tanque e curador ao mesmo tempo (ex: Blissey) ocupa um slot só. */
-  const dupla = r.tank.find(t => r.cur.some(c => c.m === t.m));
-  const d1 = r.atac.find(x => !dupla || x.m !== dupla.m);
-  const d2 = d1 && r.atac.find(x => x.m !== d1.m && (!dupla || x.m !== dupla.m));
-  const tanqueCuradorDPS = dupla && d1 && d2 ? [[dupla, "tanque e curador"], [d1, "DPS"], [d2, "DPS"]] : null;
   return [
     {nome: nomes[0], membros: doisTanques},
-    {nome: nomes[1], membros: tanqueCurador},
-    {nome: nomes[2], membros: tanqueCuradorDPS}
+    {nome: nomes[1], membros: tanqueCurador}
   ];
 }
 
@@ -689,7 +684,7 @@ const TRAD_EN = {
  "Escolha a raid": "Choose the raid",
  "na busca acima: digite o nome ou o número da Pokédex.": "in the search above: type the name or the Pokédex number.",
  "Recomendação:": "Recommendation:",
- "mostra o seu melhor atacante, tanque e curador para esta raid, e três times de 3 Pokémon (2 tanques + 1 DPS; 1 tanque + 1 curador + 1 DPS; ou 1 tanque-curador + 2 DPS).": "shows your best attacker, tank and healer for this raid, and three teams of 3 Pokémon (2 tanks + 1 DPS; 1 tank + 1 healer + 1 DPS; or 1 tank-healer + 2 DPS).",
+ "mostra o seu melhor atacante, tanque e curador para esta raid, e dois times de 3 Pokémon (2 tanques + 1 DPS, ou 1 tanque + 1 curador + 1 DPS).": "shows your best attacker, tank and healer for this raid, and two teams of 3 Pokémon (2 tanks + 1 DPS, or 1 tank + 1 healer + 1 DPS).",
  "\"seu ≈\":": "\"yours ≈\":",
  "é a estimativa para o SEU Pokémon, usando nível, IV e Max que você cadastrou. O número \"página\" é o do GO Hub, com nível 40, Max 3 e IV 15.": "is the estimate for YOUR Pokémon, using the level, IV and Max you registered. The \"page\" number is GO Hub's, at level 40, Max 3 and IV 15.",
  "Atacante:": "Attacker:",
@@ -776,8 +771,6 @@ const TRAD_EN = {
  "não aguenta nem 2 golpes do chefe.": "can't survive even 2 boss hits.",
  "golpes do chefe.": "boss hits.",
  "Raids de lendários e Gigamax são feitas para grupos com Pokémon de nível alto e golpes Max evoluídos. Junte mais treinadores ou fortaleça seus Pokémon.": "Legendary and Gigamax raids are made for groups with high-level Pokémon and upgraded Max moves. Bring more trainers or power up your Pokémon.",
- "Tanque-curador + 2 DPS": "Tank-healer + 2 DPS",
- "tanque e curador": "tank and healer",
  "tanque": "tank",
  "curador": "healer",
  "\"≈\" é a estimativa para o seu Pokémon, com nível, IV e Max cadastrados. \"página\" é o número do GO Hub (nível 40, Max 3, IV 15). IV em branco conta como 0. Curador: a Cura Max cura uma % do PS do seu Pokémon, então vale para qualquer raid; com Cura Max 0 ele não entra.": "\"≈\" is the estimate for your Pokémon, using the level, IV and Max levels you entered. \"página\" is the GO Hub number (level 40, Max 3, IV 15). Blank IV counts as 0. Healer: Max Spirit heals a % of your Pokémon's own HP, so it works in any raid; with Max Spirit 0 it is left out.",
